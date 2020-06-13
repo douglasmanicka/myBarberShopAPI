@@ -18,3 +18,5 @@ module.exports = {
     'no-unused-vars': ['error', { argsIgnoPattern: 'next' }],
   },
 };
+
+// 'no-unused-vars': 'off',

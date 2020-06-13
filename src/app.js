@@ -1,6 +1,7 @@
 const express = require('express');
 const routes = require('./routes');
-// eslint-disable-line global-require
+
+require('./database');
 
 class App {
   constructor() {
