@@ -10,6 +10,7 @@ module.exports = {
     ecmaVersion: 11,
   },
   rules: {
+    'no-param-reassign': 0,
     'prettier/prettier': 'error',
     'global-require': 'off',
     'class-methods-use-this': 'off',
