@@ -1,9 +1,19 @@
 const jwt = require('jsonwebtoken');
+const yup = require('yup');
 require('dotenv/config');
 const User = require('../models/User');
 
 class SessionController {
   async createSession(req, res) {
+    const schema = yup.object().shape({
+      email: yup.string().email().required(),
+      password: yup.string().required(),
+    });
+
+    if (!(await schema.isValid(req.body))) {
+      return res.status(400).json({ error: 'Validation fails ' });
+    }
+
     const { email, password } = req.body;
 
     const user = await User.findOne({ where: { email } });
