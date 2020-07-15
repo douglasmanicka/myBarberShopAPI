@@ -1,10 +1,14 @@
 const { Router } = require('express');
+const multer = require('multer');
+const multerConfig = require('./config/multer');
 const UserController = require('./app/controllers/UserController');
 const SessionController = require('./app/controllers/SessionController');
+const FileController = require('./app/controllers/FileController');
 const authMiddleware = require('./app/middlewares/auth');
 // const User = require('./app/models/User');
 
 const routes = new Router();
+const upload = multer(multerConfig);
 
 routes.post('/users', UserController.store);
 routes.post('/sessions', SessionController.createSession);
@@ -12,11 +16,13 @@ routes.post('/sessions', SessionController.createSession);
 routes.use(authMiddleware);
 
 routes.put('/users', UserController.update);
+
+routes.post('/files', upload.single('file'), FileController.store);
 // routes.get('/', async (req, res) => {
 //   // Test Create User
 //   const user = await User.create({
-//     name: 'TestCreateUser2',
-//     email: 'testCreateUser2@email.com',
+//     name: 'TestCreateUser',
+//     email: 'testCreateUser@email.com',
 //     password_hash: '12345678',
 //     provider: true,
 //   });
