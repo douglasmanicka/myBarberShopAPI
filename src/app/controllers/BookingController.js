@@ -1,4 +1,5 @@
 const yup = require('yup');
+const { startOfHour, parseISO, isBefore } = require('date-fns');
 const Booking = require('../models/Booking');
 const User = require('../models/User');
 
@@ -16,7 +17,8 @@ class BookingController {
     const { provider_id, date } = req.body;
 
     /**
-     * check is provider id is a provider
+     * check if provider_id is a provider
+     * you can only booking with a  provider
      */
     const isProvider = await User.findOne({
       where: { id: provider_id, provider: true },
@@ -28,10 +30,68 @@ class BookingController {
         .json({ error: 'you can only create bookings with providers' });
     }
 
+    /**
+     *  # Time rules:
+     *  [x] the user cannot reserve a past date
+     *  [X] the user cannot reserve a past time
+     *  [x] allow only one booking per hour
+     *  [x] check if the booking date/time is not being used
+     */
+
+    /**
+     * Check for past dates
+     */
+    const hourStart = startOfHour(parseISO(date));
+    console.log(`hourStart = ${hourStart}`);
+    console.log(`hourStart = ${new Date()}`);
+
+    if (isBefore(hourStart, new Date())) {
+      console.log(`hourStart = ${hourStart}`);
+      console.log(`hourStart = ${new Date()}`);
+      return res.status(400).json({ error: 'Past date are not permited' });
+    }
+
+    /**
+     * Check availability
+     */
+
+    const checkAvailability = await Booking.findOne({
+      where: {
+        provider_id,
+        canceled_at: null,
+        date: hourStart,
+      },
+    });
+
+    /**
+     * date conversion from postgress to pass to the frontend
+     * format dates came to frontend:
+     * "2020-07-16T15:00:00-03:00" or "2020-07-16 22:00:00"
+     * request body format:
+     * {
+     *  "provider_id": 8,
+     *  "date": "2020-07-16 22:00:00"
+     *  }
+     */
+    // console.log(`Booking Example: = ${JSON.stringify(checkAvailability)}`);
+    // const dateFromPostgress = parseISO('2020-07-17T01:00:00.000Z');
+    // const fullHour = `${dateFromPostgress.getHours()}:${dateFromPostgress.getMinutes()}:${dateFromPostgress.getSeconds()}`;
+    // const fullDate = `${dateFromPostgress.getFullYear()}-${
+    //   dateFromPostgress.getMonth() + 1
+    // }-${dateFromPostgress.getDate()}`;
+    // console.log(`Date: ${fullDate}`);
+    // console.log(`Hour: ${fullHour}`);
+
+    if (checkAvailability) {
+      return res
+        .status(400)
+        .json({ error: 'Booking date is not available', checkAvailability });
+    }
+
     const booking = await Booking.create({
       user_id: req.userId,
       provider_id,
-      date,
+      date: hourStart,
     });
     return res.json(booking);
   }

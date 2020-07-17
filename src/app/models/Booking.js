@@ -10,6 +10,11 @@ class Booking extends Model {
       },
       {
         sequelize,
+        // dialect: 'postgres',
+        // dialectOptions: {
+        //   useUTC: false, // for reading from database
+        // },
+        // timezone: '-03:00', // for writing to database
       }
     );
 
