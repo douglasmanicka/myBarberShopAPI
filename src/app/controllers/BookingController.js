@@ -2,8 +2,32 @@ const yup = require('yup');
 const { startOfHour, parseISO, isBefore } = require('date-fns');
 const Booking = require('../models/Booking');
 const User = require('../models/User');
+const File = require('../models/File');
 
 class BookingController {
+  async index(req, res) {
+    const bookings = await Booking.findAll({
+      where: { user_id: req.userId, canceled_at: null },
+      order: ['date'],
+      attributes: ['id', 'date'],
+      include: [
+        {
+          model: User,
+          as: 'provider',
+          attributes: ['id', 'name'],
+          include: [
+            {
+              model: File,
+              as: 'avatar',
+              attributes: ['id', 'name', 'url'],
+            },
+          ],
+        },
+      ],
+    });
+    return res.json(bookings);
+  }
+
   async create(req, res) {
     const schema = yup.object().shape({
       provider_id: yup.number().required(),
