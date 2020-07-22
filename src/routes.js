@@ -7,6 +7,7 @@ const FileController = require('./app/controllers/FileController');
 const ProviderController = require('./app/controllers/ProviderController');
 const BookingController = require('./app/controllers/BookingController');
 const ScheduleController = require('./app/controllers/ScheduleController');
+const NotificationController = require('./app/controllers/NotificationControler');
 const authMiddleware = require('./app/middlewares/auth');
 // const User = require('./app/models/User');
 
@@ -23,6 +24,8 @@ routes.get('/providers', ProviderController.index);
 routes.post('/bookings', BookingController.create);
 routes.get('/bookings', BookingController.index);
 routes.get('/schedule', ScheduleController.index);
+routes.get('/notifications', NotificationController.index);
+routes.put('/notifications/:id', NotificationController.update);
 
 routes.post('/files', upload.single('file'), FileController.store);
 // routes.get('/', async (req, res) => {

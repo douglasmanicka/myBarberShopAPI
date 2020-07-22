@@ -1,8 +1,10 @@
 const yup = require('yup');
-const { startOfHour, parseISO, isBefore } = require('date-fns');
+const { startOfHour, parseISO, isBefore, format } = require('date-fns');
+// const pt_br = require('date-fns/locale/pt-BR');
 const Booking = require('../models/Booking');
 const User = require('../models/User');
 const File = require('../models/File');
+const Notification = require('../schemas/Notification');
 
 class BookingController {
   async index(req, res) {
@@ -120,6 +122,33 @@ class BookingController {
       provider_id,
       date: hourStart,
     });
+
+    /**
+     * Notify provider of new schedule
+     */
+
+    const user = await User.findByPk(req.userId);
+
+    // content ptBR
+    // const formattedDatePTBR = format(
+    //   hourStart,
+    //   "'dia' dd 'de' MMMM', ás' H:mm'h'",
+    //   {
+    //     locale: pt_br,
+    //   }
+    // );
+    // const contentPTBR = `Novo agendamento de ${user.name} para ${formattedDatePTBR}`;
+
+    const formattedDateEN = format(hourStart, "MMMM' at' H:mm a");
+    const contentEN = `New ${user.name} schedule for ${formattedDateEN}`;
+
+    await Notification.create({
+      content: contentEN,
+      user: provider_id,
+    });
+
+    // new john doe schedule for july 23 at 9 am
+
     return res.json(booking);
   }
 }
