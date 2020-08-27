@@ -21,8 +21,11 @@ routes.use(authMiddleware);
 
 routes.put('/users', UserController.update);
 routes.get('/providers', ProviderController.index);
-routes.post('/bookings', BookingController.create);
+
 routes.get('/bookings', BookingController.index);
+routes.post('/bookings', BookingController.create);
+routes.delete('/bookings/:id', BookingController.delete);
+
 routes.get('/schedule', ScheduleController.index);
 routes.get('/notifications', NotificationController.index);
 routes.put('/notifications/:id', NotificationController.update);

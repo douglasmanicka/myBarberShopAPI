@@ -1,10 +1,17 @@
 const yup = require('yup');
-const { startOfHour, parseISO, isBefore, format } = require('date-fns');
+const {
+  startOfHour,
+  parseISO,
+  isBefore,
+  format,
+  subHours,
+} = require('date-fns');
 // const pt_br = require('date-fns/locale/pt-BR');
 const Booking = require('../models/Booking');
 const User = require('../models/User');
 const File = require('../models/File');
 const Notification = require('../schemas/Notification');
+const Mail = require('../../lib/Mail');
 
 class BookingController {
   async index(req, res) {
@@ -139,15 +146,69 @@ class BookingController {
     // );
     // const contentPTBR = `Novo agendamento de ${user.name} para ${formattedDatePTBR}`;
 
-    const formattedDateEN = format(hourStart, "MMMM' at' H:mm a");
+    const formattedDateEN = format(hourStart, "MMMM dd'th at' H:mm a");
     const contentEN = `New ${user.name} schedule for ${formattedDateEN}`;
 
+    /**
+     * Notify booking provider
+     */
     await Notification.create({
       content: contentEN,
       user: provider_id,
     });
 
     // new john doe schedule for july 23 at 9 am
+
+    return res.json(booking);
+  }
+
+  async delete(req, res) {
+    const booking = await Booking.findByPk(req.params.id, {
+      include: [
+        {
+          model: User,
+          as: 'provider',
+          attributes: ['name', 'email'],
+        },
+        {
+          model: User,
+          as: 'user',
+          attributes: ['name'],
+        },
+      ],
+    });
+
+    if (booking.user_id !== req.userId) {
+      return res
+        .status(401)
+        .json({ error: 'You don`t have permission to cancel this booking!' });
+    }
+
+    const dateWithSub = subHours(booking.date, 2);
+    console.log(`dateWithSub = ${dateWithSub}`);
+    console.log(`new Date() = ${new Date()}`);
+
+    if (isBefore(dateWithSub, new Date())) {
+      return res.status(401).json({
+        error: 'You can only cancel bookings only 2 hours in advance!',
+      });
+    }
+
+    booking.canceled_at = new Date();
+
+    await booking.save();
+
+    await Mail.sendMail({
+      to: `${booking.provider.name} <${booking.provider.email}>`,
+      subject: 'Canceled Booking',
+      // text: 'You have a new cancel',
+      template: 'cancellation',
+      context: {
+        provider: booking.provider.name,
+        user: booking.user.name,
+        date: format(booking.date, "MMMM dd'th at' H:mm a"),
+      },
+    });
 
     return res.json(booking);
   }
